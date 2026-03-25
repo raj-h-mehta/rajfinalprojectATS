@@ -91,7 +91,7 @@ export default function ResultDetailPage() {
       }
 
       setExpOpen(false)
-      router.push(`/results/${encodeURIComponent(id)}/experiments`)
+      router.push(`/results/${encodeURIComponent(id)}/experiment`) //GS deleted the "s"
     } catch (e) {
       setExpErr(e?.message || "Experiment failed")
     } finally {
@@ -347,16 +347,14 @@ export default function ResultDetailPage() {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="font-semibold">Candidate</TableHead>
-                    {activeRankers.map((rk) => (
-                      <>
-                        <TableHead className="text-center font-semibold">
-                          {rk.toUpperCase()} Rank
-                        </TableHead>
-                        <TableHead className="text-center font-semibold">
-                          {rk.toUpperCase()} Score
-                        </TableHead>
-                      </>
-                    ))}
+                   {activeRankers.flatMap((rk) => [
+                      <TableHead key={`${rk}-rank`} className="text-center font-semibold">
+                        {rk.toUpperCase()} Rank
+                      </TableHead>,
+                      <TableHead key={`${rk}-score`} className="text-center font-semibold">
+                        {rk.toUpperCase()} Score
+                      </TableHead>,
+                    ])}
                 </TableRow>
               </TableHeader>
 
@@ -379,16 +377,14 @@ export default function ResultDetailPage() {
                           </span>
                         </div>
                       </TableCell>
-                        {activeRankers.map((rk) => (
-                          <>
-                            <TableCell className="text-center">
-                              {r.metrics[rk]?.rank || "—"}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {r.metrics[rk]?.rank ? formatScore(r.metrics[rk]?.score) : "—"}
-                            </TableCell>
-                          </>
-                        ))}
+                        {activeRankers.flatMap((rk) => [
+                          <TableCell key={`${r.candidate_id}-${rk}-rank`} className="text-center">
+                            {r.metrics[rk]?.rank || "—"}
+                          </TableCell>,
+                          <TableCell key={`${r.candidate_id}-${rk}-score`} className="text-center">
+                            {r.metrics[rk]?.score ?? "—"}
+                          </TableCell>,
+                        ])}      
                     </TableRow>
                   )
                 })}
