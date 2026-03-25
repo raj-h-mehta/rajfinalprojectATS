@@ -30,13 +30,13 @@ function formatScore(value) {
   if (!Number.isFinite(n)) return "—"
   return n.toFixed(2)
 }
-
+/** 
 function rankerLabel(key) {
   if (key === "bm25") return "BM25"
   if (key === "tfidf") return "TFIDF"
   if (key === "transformer") return "Transformer"
   return String(key || "").toUpperCase()
-}
+}  */ //GS not needed!  don't hard code.
 
 export default function ResultDetailPage() {
   const router = useRouter()
@@ -58,7 +58,7 @@ export default function ResultDetailPage() {
     setExpErr("")
 
     try {
-      const paramsRes = await fetch(
+      /**const paramsRes = await fetch(
         `${API_BASE}/jobs/${encodeURIComponent(id)}/params`,
         {
           method: "PUT",
@@ -70,19 +70,18 @@ export default function ResultDetailPage() {
             },
           }),
         }
-      )
-
+      ) 
       if (!paramsRes.ok) {
         const txt = await paramsRes.text().catch(() => "")
         throw new Error(txt || "Failed to set params")
-      }
+      }  **/ //GS the back end controls the rankers -should not be here. 
 
       const runRes = await fetch(
         `${API_BASE}/jobs/${encodeURIComponent(id)}/experiments/run`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ candidate_id: null }),
+          body: JSON.stringify({candidate_id: null}) 
         }
       )
 
@@ -191,7 +190,7 @@ export default function ResultDetailPage() {
     }
 
     const rows = Array.from(byCandidate.entries()).map(([candidateId, rankers]) => {
-      const tfidf = rankers.tfidf || { rank: 0, score: 0 }
+/**      const tfidf = rankers.tfidf || { rank: 0, score: 0 }
       const bm25 = rankers.bm25 || { rank: 0, score: 0 }
       const transformer = rankers.transformer || { rank: 0, score: 0 }
 
@@ -208,7 +207,16 @@ export default function ResultDetailPage() {
         tfidfScore: tfidf.score,
         transformerRank: transformer.rank || 0,
         transformerScore: transformer.score,
+      }   */  //GS no need to hard code. Use an array., 
+      
+      const metrics = {}
+      for (const k of Object.keys(rankers)) {
+        metrics[k] = {rank: rankers[k]?.rank || 0, score: rankers[k]?.score || 0}
       }
+      const overallRank =
+        Object.values(metrics).map(m => m.rank).find(r => r > 0) || 9999
+      return {candidateId, candidateName: candidateNameMap.get(candidateId) || candidateId,
+        overallRank, metrics}
     })
 
     return rows.sort((a, b) => a.overallRank - b.overallRank)
@@ -339,39 +347,16 @@ export default function ResultDetailPage() {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="font-semibold">Candidate</TableHead>
-
-                  {activeRankers.includes("bm25") && (
-                    <>
-                      <TableHead className="text-center font-semibold">
-                        {rankerLabel("bm25")} Rank
-                      </TableHead>
-                      <TableHead className="text-center font-semibold">
-                        {rankerLabel("bm25")} Score
-                      </TableHead>
-                    </>
-                  )}
-
-                  {activeRankers.includes("tfidf") && (
-                    <>
-                      <TableHead className="text-center font-semibold">
-                        {rankerLabel("tfidf")} Rank
-                      </TableHead>
-                      <TableHead className="text-center font-semibold">
-                        {rankerLabel("tfidf")} Score
-                      </TableHead>
-                    </>
-                  )}
-
-                  {activeRankers.includes("transformer") && (
-                    <>
-                      <TableHead className="text-center font-semibold">
-                        {rankerLabel("transformer")} Rank
-                      </TableHead>
-                      <TableHead className="text-center font-semibold">
-                        {rankerLabel("transformer")} Score
-                      </TableHead>
-                    </>
-                  )}
+                    {activeRankers.map((rk) => (
+                      <>
+                        <TableHead className="text-center font-semibold">
+                          {rk.toUpperCase()} Rank
+                        </TableHead>
+                        <TableHead className="text-center font-semibold">
+                          {rk.toUpperCase()} Score
+                        </TableHead>
+                      </>
+                    ))}
                 </TableRow>
               </TableHeader>
 
@@ -394,39 +379,16 @@ export default function ResultDetailPage() {
                           </span>
                         </div>
                       </TableCell>
-
-                      {activeRankers.includes("bm25") && (
-                        <>
-                          <TableCell className="text-center">
-                            {r.bm25Rank || "—"}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {r.bm25Rank ? formatScore(r.bm25Score) : "—"}
-                          </TableCell>
-                        </>
-                      )}
-
-                      {activeRankers.includes("tfidf") && (
-                        <>
-                          <TableCell className="text-center">
-                            {r.tfidfRank || "—"}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {r.tfidfRank ? formatScore(r.tfidfScore) : "—"}
-                          </TableCell>
-                        </>
-                      )}
-
-                      {activeRankers.includes("transformer") && (
-                        <>
-                          <TableCell className="text-center">
-                            {r.transformerRank || "—"}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {r.transformerRank ? formatScore(r.transformerScore) : "—"}
-                          </TableCell>
-                        </>
-                      )}
+                        {activeRankers.map((rk) => (
+                          <>
+                            <TableCell className="text-center">
+                              {r.metrics[rk]?.rank || "—"}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {r.metrics[rk]?.rank ? formatScore(r.metrics[rk]?.score) : "—"}
+                            </TableCell>
+                          </>
+                        ))}
                     </TableRow>
                   )
                 })}
@@ -446,8 +408,7 @@ export default function ResultDetailPage() {
             id="run-full-experiment-description"
             className="text-sm text-muted-foreground"
           >
-            This will run experiments for all attached candidates using BM25, TFIDF,
-            and Transformer with multiple iterations.
+            This will run experiments for all attached candidates. 
           </p>
 
           {expErr && <p className="text-sm text-destructive">{expErr}</p>}
