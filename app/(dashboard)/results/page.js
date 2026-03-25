@@ -14,7 +14,7 @@ import {
 import { PageHeader } from "@/components/page-header"
 import { CheckCircle2, Clock, ArrowRight } from "lucide-react"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8010"
+import { API_BASE } from "@/lib/api";
 
 function mapStatus(status) {
   const s = String(status || "").toLowerCase()

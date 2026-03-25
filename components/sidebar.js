@@ -25,10 +25,10 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-card">
       <div className="flex justify-center py-2">
         <Image
-          src="/logo.png"
+          src="/logo1.png"
           alt="Job Applicant AI Explanation Engine"
-          width={300}
-          height={100}
+          width={400}
+          height={200}
           className="w-40 h-auto object-contain"
         />
       </div>
