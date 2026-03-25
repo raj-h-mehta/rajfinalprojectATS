@@ -26,7 +26,7 @@ export function Sidebar() {
       <div className="flex justify-center py-2">
         <Image
           src="/logo.png"
-          alt="GUSIGHT AI"
+          alt="Job Applicant AI Explanation Engine"
           width={300}
           height={100}
           className="w-40 h-auto object-contain"
