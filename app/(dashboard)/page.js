@@ -14,7 +14,7 @@ import {
   BarChart3,
 } from "lucide-react"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8010"
+import { API_BASE } from "@/lib/api";
 
 export default function DashboardPage() {
   const [jobsIndex, setJobsIndex] = useState([])
