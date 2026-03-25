@@ -81,7 +81,7 @@ export default function ExperimentOutputPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [attachedCandidates, setAttachedCandidates] = useState([])
-  const [selectedRanker, setSelectedRanker] = useState("transformer")
+  const [selectedRanker, setSelectedRanker] = useState(null)  //GS was ("transformer")
 
   useEffect(() => {
     let alive = true
@@ -153,7 +153,7 @@ export default function ExperimentOutputPage() {
   const rankerOptions = useMemo(() => {
     const rankers = Array.isArray(jobState?.params_current?.rankers)
       ? jobState.params_current.rankers
-      : ["bm25", "tfidf", "transformer"]
+      : []    //GS was ["bm25", "tfidf", "transformer"] - let the back end handle
 
     return rankers.map((r) => String(r).toLowerCase())
   }, [jobState])
@@ -173,7 +173,7 @@ export default function ExperimentOutputPage() {
   }, [attachedCandidates])
 
   useEffect(() => {
-    if (rankerOptions.length > 0 && !rankerOptions.includes(selectedRanker)) {
+    if (rankerOptions.length > 0 && !selectedRanker) {  //GS minor edit hgere. 
       setSelectedRanker(rankerOptions[0])
     }
   }, [rankerOptions, selectedRanker])

@@ -273,7 +273,7 @@ export default function ExperimentOutputPage() {
 
         const combinedFactor =
           factors.find((f) => String(f?.case_type ?? "").toLowerCase() === "combined") || null
-
+/**
         const topFactorMetrics = topFactor
           ? experimentLookup.get(
               `${candidateId}__${selectedRanker}__${String(topFactor.case_id)}`
@@ -284,7 +284,7 @@ export default function ExperimentOutputPage() {
           ? experimentLookup.get(
               `${candidateId}__${selectedRanker}__${String(combinedFactor.case_id)}`
             )
-          : null
+          : null   */  //GS this is incorrect
 
         const impactCounts = {
           tech: 0,
@@ -320,10 +320,24 @@ export default function ExperimentOutputPage() {
           baselineNorm: item?.baseline_norm ?? baseline.norm,
           baselineRank: item?.baseline_rank ?? baseline.rank,
           topFactors: topFactors.map((f) => String(f?.full_reason ?? f?.case_type ?? "—")),
-          topFactorNorm: topFactorMetrics?.norm ?? null,
+    /**      topFactorNorm: topFactorMetrics?.norm ?? null,
           topFactorRank: topFactorMetrics?.rank ?? null,
           combinedNorm: combinedMetrics?.norm ?? null,
-          combinedRank: combinedMetrics?.rank ?? null,
+          combinedRank: combinedMetrics?.rank ?? null,   */
+          topFactorNorm:
+            topFactor && (item?.baseline_norm ?? baseline.norm) != null
+              ? Number(item?.baseline_norm ?? baseline.norm) + Number(topFactor?.delta_norm ?? 0): null,
+          topFactorRank:
+            topFactor && (item?.baseline_rank ?? baseline.rank) != null
+              ? Number(item?.baseline_rank ?? baseline.rank) - Number(topFactor?.delta_rank ?? 0): null,
+          combinedNorm:
+            combinedFactor?.delta_norm != null
+              ? Number(item?.baseline_norm ?? baseline.norm ?? 0) + Number(combinedFactor.delta_norm)
+              : (item?.baseline_norm ?? baseline.norm ?? null),
+          combinedRank:
+            combinedFactor?.delta_rank != null
+              ? Number(item?.baseline_rank ?? baseline.rank ?? 0) - Number(combinedFactor.delta_rank)
+              : (item?.baseline_rank ?? baseline.rank ?? null),
           topExplains:
             item?.top_factor_explains != null
               ? Number(item.top_factor_explains) * 100
@@ -353,11 +367,12 @@ export default function ExperimentOutputPage() {
               : "—",
           impactSummary,
           scoreDelta:
-            item?.baseline_norm != null && combinedMetrics?.norm != null
+            combinedFactor?.delta_norm != null ? Number(combinedFactor.delta_norm):0,
+/**            item?.baseline_norm != null && combinedMetrics?.norm != null
               ? Number(combinedMetrics.norm) - Number(item.baseline_norm)
               : baseline.norm != null && combinedMetrics?.norm != null
               ? Number(combinedMetrics.norm) - Number(baseline.norm)
-              : null,
+              : null, */ //GS - not sure what all this is doing
         }
       })
       .sort((a, b) => {

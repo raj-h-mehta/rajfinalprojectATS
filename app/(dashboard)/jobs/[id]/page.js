@@ -29,6 +29,57 @@ export default function Viewjobdetails() {
   const [availableCandidates, setAvailableCandidates] = useState([])
   const [isUpdatingCandidates, setIsUpdatingCandidates] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
+
+  //GS added to show params
+  const [selectedRankers, setSelectedRankers] = useState([])
+  const [allowedRankers, setAllowedRankers] = useState([])
+  const [numIterations, setNumIterations] = useState(12)
+  const loadParams = async () => {
+    if (!jobId) return
+    const res = await fetch(`${API_BASE}/jobs/${encodeURIComponent(jobId)}/params`, {
+      cache: "no-store",
+    })
+    const data = await res.json()
+    const p = data?.params ?? {}
+    setAllowedRankers(Array.isArray(data?.rankers) ? data.rankers : [])
+    setSelectedRankers(Array.isArray(p?.rankers) ? p.rankers : [])
+    setNumIterations(p?.num_iterations ?? 12)
+  }
+  const handleRankerToggle = (ranker) => {
+    setSelectedRankers((prev) =>
+      prev.includes(ranker) ? prev.filter((r) => r !== ranker) : [...prev, ranker]
+    )
+  }
+  const handleChangeParams = async () => {
+    if (!jobId) return
+    if (!selectedRankers.length) {
+      setError("Select at least one ranker")
+      return
+    }
+    const iters = Number(numIterations)
+    if (!Number.isFinite(iters) || iters < 5 || iters > 30) {
+      setError("Iterations must be 5–30")
+      return
+    }
+    setError("")
+    const res = await fetch(`${API_BASE}/jobs/${encodeURIComponent(jobId)}/params`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        params: {
+          rankers: selectedRankers,
+          num_iterations: iters,
+        },
+      }),
+    })
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "")
+      throw new Error(`PUT /jobs/${jobId}/params failed (${res.status}) ${txt}`)
+    }
+    await loadParams()
+    }  //GS added to show the parameters
+
+  
   const loadAttachedCandidates = async () => {
     try {
       const res = await fetch(
@@ -149,6 +200,7 @@ export default function Viewjobdetails() {
     loadCandidates()
     loadJobDetails()
     loadAttachedCandidates()
+    loadParams()
   }, [jobId])
   useEffect(() => {
     const attachedIds = new Set(attachedCandidates.map((c) => c.candidate_id))
@@ -167,7 +219,7 @@ export default function Viewjobdetails() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rankers: [] }),
+          body: JSON.stringify({})   //GS was ({ rankers: [] }), this fixes issue
         }
       )
 
@@ -421,21 +473,46 @@ export default function Viewjobdetails() {
               {attachedCandidates.length !== 1 ? "s" : ""} attached
             </p>
           </div>
-
-          <Button size="lg" onClick={handleRunATS} disabled={!jobId || attachedCandidates.length === 0 || isRunning}>
-            {isRunning ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Running Analysis...
-              </>
-            ) : (
-              <>
-                <PlayCircle className="mr-2 h-5 w-5" />
-                Run Baseline Ranking
-              </>
-            )}
-          </Button>
+           <div className="flex gap-2">
+            <Button size="lg" onClick={handleRunATS} disabled={!jobId || attachedCandidates.length === 0 || isRunning}>
+              {isRunning ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Running Analysis...
+                </>
+              ) : (
+                <>
+                  <PlayCircle className="mr-2 h-5 w-5" />
+                  Run Baseline Ranking
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
+        <div className="px-6 pb-4">
+            <div className="text-xs text-muted-foreground">Rankers</div>
+            <div className="flex flex-wrap gap-3">
+              {allowedRankers.map((ranker) => (
+                <label key={ranker} className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={selectedRankers.includes(ranker)}
+                    onChange={() => handleRankerToggle(ranker)}
+                  />
+                  <span>{ranker}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex items-end gap-3">
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Iterations</div>
+                <input type="number" min="5" max="30" value={numIterations}  onChange={(e) => setNumIterations(e.target.value)}
+                  className="w-24 rounded-md border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <Button variant="outline" onClick={handleChangeParams}>
+                Change Parameters
+              </Button>
+          </div>
+        </div>
       </Card>
     </div>
   )
